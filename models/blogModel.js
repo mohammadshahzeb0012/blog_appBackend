@@ -1,6 +1,5 @@
 const blogSchema = require("../schemas/blogSchema")
 const likeSchema = require("../schemas/likeSchema")
-const userSchema = require("../schemas/userSchema")
 const commentSchema = require("../schemas/commentSchema")
 
 const findBlog = async (blogID) => {
@@ -28,11 +27,18 @@ const creatBlogModel = async (user, title, content, tagsArr) => {
 }
 
 const editBlogModel = async (blogID, payLoad) => {
-    const response = await userSchema.findOneAndUpdate(
+    const response = await blogSchema.findOneAndUpdate(
         { _id: blogID },
         payLoad,
     )
     return response
+}
+
+const deleteBlogModel = async(blogID)=>{
+  const response = await blogSchema.findByIdAndDelete(
+    { _id: blogID },
+  )
+  return response
 }
 
 const likeBlogModel = async (userID, blogId, type) => {
@@ -81,5 +87,6 @@ module.exports = {
     editBlogModel,
     likeBlogModel,
     findLikeinDb,
-    postCommentModel
+    postCommentModel,
+    deleteBlogModel
 }

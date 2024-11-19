@@ -1,4 +1,4 @@
-const { creatBlogModel, allBlogsModel, myblogsModel, findBlog, editBlogModel, likeBlogModel, findLikeinDb, postCommentModel } = require("../models/blogModel")
+const { creatBlogModel, allBlogsModel, myblogsModel, findBlog, editBlogModel, likeBlogModel, findLikeinDb, postCommentModel, deleteBlogModel } = require("../models/blogModel")
 const { findUser } = require("./../models/userModel")
 const mongoose = require("mongoose")
 
@@ -72,6 +72,41 @@ const editBlogController = async (req, res) => {
     }
 }
 
+const deleteBlogController = async (req, res) => {
+    const { blogID } = req.body
+    const user = req.user
+
+    if (!blogID || !mongoose.Types.ObjectId.isValid(blogID)) {
+        return res.status(400).json({
+            message: "missing or invalid blogid"
+        })
+    }
+    try {
+        const blogExists = await findBlog(blogID)
+        if (!blogExists) {
+            return res.status(400).json({
+                message: "blog not found!"
+            })
+        }
+
+        if (user?._id !== blogExists.postedBy.toString()) {
+            return res.status(403).json({
+                message: "not allowed to edit blog!"
+            })
+        }
+
+        await deleteBlogModel(blogID)
+        return res.status(200).json({
+            message: "blog deleted success!",
+        })
+    } catch (error) {
+        return res.status(500).json({
+            message: "server error!"
+        })
+    }
+
+}
+
 const likeBlogController = async (req, res) => {
     const { blogID } = req.body
     const user = req.user
@@ -97,7 +132,7 @@ const likeBlogController = async (req, res) => {
             })
         }
 
-        const findLike = await findLikeinDb(user._id, blogID)        
+        const findLike = await findLikeinDb(user._id, blogID)
         if (findLike) {
             await likeBlogModel(user._id, blogID, "delete")
             return res.status(200).json({
@@ -117,11 +152,11 @@ const likeBlogController = async (req, res) => {
     }
 }
 
-const commnetBlogController = async(req,res)=>{
-    const { blogID ,comment} = req.body
+const commnetBlogController = async (req, res) => {
+    const { blogID, comment } = req.body
     const user = req.user
 
-    if(!blogID || !comment){
+    if (!blogID || !comment) {
         return res.status(400).json({
             message: "missing data!"
         })
@@ -139,15 +174,15 @@ const commnetBlogController = async(req,res)=>{
             return res.status(400).json({
                 message: "user not found!"
             })
-        }  
-        
+        }
+
         const blogExists = await findBlog(blogID)
         if (!blogExists) {
             return res.status(400).json({
                 message: "blog not found!"
             })
         }
-        await postCommentModel(user._id,blogID,comment)
+        await postCommentModel(user._id, blogID, comment)
         return res.status(201).json({
             message: "comment posted success!"
         })
@@ -193,5 +228,6 @@ module.exports = {
     myblogsController,
     editBlogController,
     likeBlogController,
-    commnetBlogController
+    commnetBlogController,
+    deleteBlogController
 }
